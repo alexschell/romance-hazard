@@ -7,7 +7,7 @@
 #   - Saved figures to output/figures/
 
 library(survival)
-library(ggsurvfit)
+# library(ggsurvfit)  # install from CRAN when online; using survminer instead
 library(ggplot2)
 library(dplyr)
 library(here)

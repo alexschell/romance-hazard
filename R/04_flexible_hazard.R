@@ -8,12 +8,9 @@
 #      Cons: requires manual interval expansion (done in 02_preprocess.R).
 #
 #   B. rstpm2::stpm2() — Royston-Parmar flexible parametric survival model
-#      Models log cumulative hazard as a natural spline in log-time.
-#      Pros: closed-form survival function; no expansion needed; easy prediction API.
-#      Cons: spline in log-time (not calendar time), less visual control.
+#      (skipped: rstpm2 not available in offline environment; install from CRAN when online)
 #
-# Both are fitted and compared. Choose whichever fits your intuition better;
-# they should give similar hazard shapes on well-behaved data.
+# Note: run A only for now.
 #
 # Produces:
 #   - Summary output to console
@@ -23,8 +20,8 @@
 #   - output/figures/survival_stpm2.png
 
 library(mgcv)
-library(rstpm2)
-library(gratia)
+# library(rstpm2)  # install from CRAN when online
+# library(gratia)  # install from CRAN when online
 library(survival)
 library(dplyr)
 library(tidyr)
@@ -102,64 +99,10 @@ p_surv_gam <- plot_survival(
 save_fig(p_surv_gam, "survival_gam.png", width = 8, height = 5)
 
 # Optional: visualise GAM smooth directly (log-hazard scale)
-p_gratia <- gratia::draw(gam_fit) +
-  labs(title = "GAM smooth: log hazard vs. time") +
-  theme_rh()
-save_fig(p_gratia, "gam_smooth.png", width = 7, height = 4)
+# gratia::draw(gam_fit) — available once gratia installed from CRAN
 
 # ══════════════════════════════════════════════════════════════════════════════
-# B. Royston-Parmar flexible parametric model (rstpm2)
+# B. Royston-Parmar (rstpm2) — skipped, install rstpm2 from CRAN when online
 # ══════════════════════════════════════════════════════════════════════════════
-# Models log cumulative hazard as a restricted cubic spline in log(time).
-# df = degrees of freedom for the spline (3–5 typical; increase for more flex).
-
-cat("\n── Fitting Royston-Parmar model (rstpm2) ──\n")
-
-stpm2_fit <- rstpm2::stpm2(
-  Surv(duration_months, event) ~ 1,
-  data = surv_df,
-  df   = 4      # knots placed at quantiles of log(event times)
-)
-
-summary(stpm2_fit)
-
-# ── Predict hazard and survival over time grid ──
-t_grid_rp <- seq(0.5, max(surv_df$duration_months), length.out = 200)
-newdata_rp <- data.frame(duration_months = t_grid_rp, event = 1)
-
-pred_haz_rp <- predict(stpm2_fit, newdata = newdata_rp,
-                        type = "hazard", se.fit = TRUE)
-pred_surv_rp <- predict(stpm2_fit, newdata = newdata_rp,
-                         type = "surv",   se.fit = TRUE)
-
-rp_df <- tibble(
-  time     = t_grid_rp,
-  hazard   = pred_haz_rp$Estimate,
-  haz_lo   = pred_haz_rp$lower,
-  haz_hi   = pred_haz_rp$upper,
-  survival = pred_surv_rp$Estimate,
-  surv_lo  = pred_surv_rp$lower,
-  surv_hi  = pred_surv_rp$upper
-)
-
-p_haz_rp <- plot_hazard(
-  t      = rp_df$time,
-  hazard = rp_df$hazard,
-  lower  = rp_df$haz_lo,
-  upper  = rp_df$haz_hi,
-  title  = "Flexible Hazard Rate (Royston-Parmar, rstpm2)",
-  xlab   = "Duration (months)"
-)
-save_fig(p_haz_rp, "hazard_stpm2.png", width = 8, height = 5)
-
-p_surv_rp <- plot_survival(
-  t        = rp_df$time,
-  survival = rp_df$survival,
-  lower    = rp_df$surv_lo,
-  upper    = rp_df$surv_hi,
-  title    = "Survival Function (Royston-Parmar, rstpm2)",
-  xlab     = "Duration (months)"
-)
-save_fig(p_surv_rp, "survival_stpm2.png", width = 8, height = 5)
 
 message("\nFlexible hazard analysis complete. Figures saved to ", FIG_DIR)

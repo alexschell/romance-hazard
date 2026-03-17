@@ -79,10 +79,9 @@ if (!"id" %in% names(df)) {
   df <- df |> mutate(id = row_number())
 }
 
-expanded <- df |>
-  rowwise() |>
-  group_modify(~ expand_to_intervals(cur_group() |> bind_cols(.x))) |>
-  ungroup()
+expanded <- do.call(rbind, lapply(seq_len(nrow(df)), function(i) {
+  expand_to_intervals(df[i, ])
+}))
 
 # Carry covariate columns from the original data
 covariate_cols <- setdiff(names(df), c("id", "start_date", "end_date",
