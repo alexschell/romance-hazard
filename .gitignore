@@ -1,5 +1,8 @@
-# Personal data - never commit
-data/raw/
+# Personal data - exclude by default
+# Use `data/raw/*` (not `data/raw/`) so file-level exceptions work below
+data/raw/*
+# Exception: explicitly created prototype data is tracked
+!data/raw/relationships.csv
 
 # R environment library (large, platform-specific)
 renv/library/
